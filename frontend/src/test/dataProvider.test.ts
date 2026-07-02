@@ -81,7 +81,7 @@ describe('dataProvider', () => {
         status: 200,
         headers: new Headers(),
         json: () => Promise.resolve({
-          result: { accessToken: 'test-token' },
+          result: { result: { accessToken: 'test-token' } },
           success: true,
         }),
       });

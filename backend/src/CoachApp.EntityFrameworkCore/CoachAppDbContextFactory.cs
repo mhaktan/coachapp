@@ -12,7 +12,6 @@ namespace CoachApp.EntityFrameworkCore
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../CoachApp.Web.Host"))
                 .AddJsonFile("appsettings.json", optional: false)
-                .AddEnvironmentVariables()
                 .Build();
 
             var connStr = configuration.GetConnectionString("Default");

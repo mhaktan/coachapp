@@ -14,17 +14,17 @@ namespace CoachApp.EntityFrameworkCore
         {
             Configuration.Modules.AbpEfCore().AddDbContext<CoachAppDbContext>(options =>
             {
-                // Read connection string from appsettings.json + env vars.
-                // AddEnvironmentVariables() ŞART: Railway/Docker ConnectionStrings__Default env var'ını
-                // okur ve appsettings.json'daki statik (localhost) değeri override eder. Yoksa ABP
-                // DbContext (seed dahil) localhost'a bağlanmaya çalışır → seed fail, admin oluşmaz.
-                var config = new ConfigurationBuilder()
-                    .SetBasePath(System.IO.Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", optional: false)
-                    .AddEnvironmentVariables()
-                    .Build();
-                var connStr = config.GetConnectionString("Default");
-                options.DbContextOptions.UseNpgsql(connStr);
+                // connStr ABP tarafından CoreModule.DefaultNameOrConnectionString'ten resolve edilir
+                // (Railway'de ConnectionStrings__Default env var). Ekstra ConfigurationBuilder/paket
+                // gerekmez. ExistingConnection = nested UnitOfWork bağlantı paylaşımı.
+                if (options.ExistingConnection != null)
+                {
+                    options.DbContextOptions.UseNpgsql(options.ExistingConnection);
+                }
+                else
+                {
+                    options.DbContextOptions.UseNpgsql(options.ConnectionString);
+                }
             });
         }
 

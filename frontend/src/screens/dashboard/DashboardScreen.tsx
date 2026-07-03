@@ -211,27 +211,28 @@ export const DashboardScreen: React.FC = () => {
     fetchData();
   }, []);
 
-  const [api_block_7Data, setApi_block_7Data] = React.useState<Record<string, unknown>[]>([]);
+  const [api_block_7Data, setApi_block_7Data] = React.useState<Record<string, unknown> | null>(null);
   const [api_block_7Loading, setApi_block_7Loading] = React.useState(true);
   React.useEffect(() => {
-    const sources = [
-      { name: 'Hoca', url: `${API_BASE}/api/services/app/Coach/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
-      { name: 'Üye', url: `${API_BASE}/api/services/app/Member/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
-      { name: 'Hoca-Üye Ataması', url: `${API_BASE}/api/services/app/CoachMember/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
-      { name: 'Seans Paketi', url: `${API_BASE}/api/services/app/SessionPackage/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
-      { name: 'Ödeme', url: `${API_BASE}/api/services/app/Payment/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
-      { name: 'Ders', url: `${API_BASE}/api/services/app/Lesson/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
-    ];
-    Promise.all(sources.map(async (s) => {
+    const fetchData = async () => {
       try {
-        const res = await fetch(s.url, { headers: getRequestHeaders() });
-        if (res.status === 401) { ['_auth_token', '_bearer_token', '_refresh_token'].forEach(k => localStorage.removeItem(k)); if (window.location.pathname !== '/login') window.location.href = '/login'; return { name: s.name, value: 0 }; }
-        if (!res.ok) return { name: s.name, value: 0 };
-        const json = unwrapResponse(await res.json()) as Record<string, unknown>;
-        const v = getNestedValue(json, s.path);
-        return { name: s.name, value: typeof v === 'number' ? v : Number(v) || 0 };
-      } catch { return { name: s.name, value: 0 }; }
-    })).then((rows) => { setApi_block_7Data(rows); setApi_block_7Loading(false); });
+        const res = await fetch(`${API_BASE}/api/services/app/Coach/GetAll?MaxResultCount=5&Sorting=id desc`, { headers: getRequestHeaders() });
+        // Token expired or invalid — clear auth and redirect to login
+        if (res.status === 401) {
+          ['_auth_token', '_bearer_token', '_refresh_token'].forEach(k => localStorage.removeItem(k));
+          if (window.location.pathname !== '/login') window.location.href = '/login';
+          return;
+        }
+        if (!res.ok) return;
+        const rawJson = await res.json();
+        // Auto-unwrap ABP/generic envelopes so {result.totalCount} or bare {totalCount} both work
+        const json = unwrapResponse(rawJson) as Record<string, unknown>;
+        const target = getNestedValue(rawJson as Record<string, unknown>, 'result.items') ?? getNestedValue(json, 'result.items');
+        setApi_block_7Data(target != null ? (target as Record<string, unknown>) : json);
+      } catch { /* ignore */ }
+      finally { setApi_block_7Loading(false); }
+    };
+    fetchData();
   }, []);
 
   const [api_block_8Data, setApi_block_8Data] = React.useState<Record<string, unknown>[]>([]);
@@ -257,28 +258,27 @@ export const DashboardScreen: React.FC = () => {
     })).then((rows) => { setApi_block_8Data(rows); setApi_block_8Loading(false); });
   }, []);
 
-  const [api_block_9Data, setApi_block_9Data] = React.useState<Record<string, unknown> | null>(null);
+  const [api_block_9Data, setApi_block_9Data] = React.useState<Record<string, unknown>[]>([]);
   const [api_block_9Loading, setApi_block_9Loading] = React.useState(true);
   React.useEffect(() => {
-    const fetchData = async () => {
+    const sources = [
+      { name: 'Hoca', url: `${API_BASE}/api/services/app/Coach/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
+      { name: 'Üye', url: `${API_BASE}/api/services/app/Member/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
+      { name: 'Hoca-Üye Ataması', url: `${API_BASE}/api/services/app/CoachMember/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
+      { name: 'Seans Paketi', url: `${API_BASE}/api/services/app/SessionPackage/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
+      { name: 'Ödeme', url: `${API_BASE}/api/services/app/Payment/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
+      { name: 'Ders', url: `${API_BASE}/api/services/app/Lesson/GetAll?MaxResultCount=1`, path: 'result.totalCount' },
+    ];
+    Promise.all(sources.map(async (s) => {
       try {
-        const res = await fetch(`${API_BASE}/api/services/app/Coach/GetAll?MaxResultCount=5&Sorting=id desc`, { headers: getRequestHeaders() });
-        // Token expired or invalid — clear auth and redirect to login
-        if (res.status === 401) {
-          ['_auth_token', '_bearer_token', '_refresh_token'].forEach(k => localStorage.removeItem(k));
-          if (window.location.pathname !== '/login') window.location.href = '/login';
-          return;
-        }
-        if (!res.ok) return;
-        const rawJson = await res.json();
-        // Auto-unwrap ABP/generic envelopes so {result.totalCount} or bare {totalCount} both work
-        const json = unwrapResponse(rawJson) as Record<string, unknown>;
-        const target = getNestedValue(rawJson as Record<string, unknown>, 'result.items') ?? getNestedValue(json, 'result.items');
-        setApi_block_9Data(target != null ? (target as Record<string, unknown>) : json);
-      } catch { /* ignore */ }
-      finally { setApi_block_9Loading(false); }
-    };
-    fetchData();
+        const res = await fetch(s.url, { headers: getRequestHeaders() });
+        if (res.status === 401) { ['_auth_token', '_bearer_token', '_refresh_token'].forEach(k => localStorage.removeItem(k)); if (window.location.pathname !== '/login') window.location.href = '/login'; return { name: s.name, value: 0 }; }
+        if (!res.ok) return { name: s.name, value: 0 };
+        const json = unwrapResponse(await res.json()) as Record<string, unknown>;
+        const v = getNestedValue(json, s.path);
+        return { name: s.name, value: typeof v === 'number' ? v : Number(v) || 0 };
+      } catch { return { name: s.name, value: 0 }; }
+    })).then((rows) => { setApi_block_9Data(rows); setApi_block_9Loading(false); });
   }, []);
 
   const [api_block_10Data, setApi_block_10Data] = React.useState<Record<string, unknown> | null>(null);
@@ -425,30 +425,20 @@ export const DashboardScreen: React.FC = () => {
 
         </div>
         <div style={{ gridColumn: 'span 6' }}>
-          {api_block_7Loading ? (
-            <TkCard header="Kayıt Sayıları">
-              <div slot="content" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, border: '3px solid #e0e0e0', borderTopColor: '#1976d2', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                  <span style={{ fontSize: 12, color: '#999' }}>Loading...</span>
-                </div>
-              </div>
-            </TkCard>
-          ) : (
-          <TkCard header="Kayıt Sayıları">
-            <div slot="content" style={{ padding: 16 }}>
-              <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={api_block_7Data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#1976d2" />
-                  </BarChart>
-                </ResponsiveContainer>
-            </div>
-          </TkCard>
-          )}
+          <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', border: '1px solid #e8e8e8' }}>
+            {api_block_7Loading ? (
+              <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>Loading...</div>
+            ) : (
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead><tr><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>ID</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>First Name</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>Last Name</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>Email</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>Phone</th></tr></thead>
+                <tbody>
+                  {(Array.isArray(api_block_7Data) ? api_block_7Data : extractArray(api_block_7Data)).map((row: Record<string, unknown>, i: number) => (
+                    <tr key={i}><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['id'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['firstName'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['lastName'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['email'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['phone'] ?? '')}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         </div>
         <div style={{ gridColumn: 'span 6' }}>
           {api_block_8Loading ? (
@@ -480,20 +470,30 @@ export const DashboardScreen: React.FC = () => {
           )}
         </div>
         <div style={{ gridColumn: 'span 6' }}>
-          <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', border: '1px solid #e8e8e8' }}>
-            {api_block_9Loading ? (
-              <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>Loading...</div>
-            ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead><tr><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>ID</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>First Name</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>Last Name</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>Email</th><th style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '2px solid #e0e0e0', fontSize: 12, color: '#666' }}>Phone</th></tr></thead>
-                <tbody>
-                  {(Array.isArray(api_block_9Data) ? api_block_9Data : extractArray(api_block_9Data)).map((row: Record<string, unknown>, i: number) => (
-                    <tr key={i}><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['id'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['firstName'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['lastName'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['email'] ?? '')}</td><td style={{ padding: '8px 12px', borderBottom: '1px solid #f0f0f0', fontSize: 13 }}>{String(row['phone'] ?? '')}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          {api_block_9Loading ? (
+            <TkCard header="Kayıt Sayıları">
+              <div slot="content" style={{ padding: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', height: 280 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 32, height: 32, border: '3px solid #e0e0e0', borderTopColor: '#1976d2', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <span style={{ fontSize: 12, color: '#999' }}>Loading...</span>
+                </div>
+              </div>
+            </TkCard>
+          ) : (
+          <TkCard header="Kayıt Sayıları">
+            <div slot="content" style={{ padding: 16 }}>
+              <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={api_block_9Data}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#1976d2" />
+                  </BarChart>
+                </ResponsiveContainer>
+            </div>
+          </TkCard>
+          )}
         </div>
         <div style={{ gridColumn: 'span 6' }}>
           <div style={{ background: '#fff', borderRadius: 8, overflow: 'hidden', border: '1px solid #e8e8e8' }}>

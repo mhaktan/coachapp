@@ -35,31 +35,31 @@ const MENU_ITEMS: MenuItem[] = [
     "icon": "dashboard"
   },
   {
-    "label": "Coach",
+    "label": "Hoca",
     "path": "/Coach"
   },
   {
-    "label": "Member",
+    "label": "Üye",
     "path": "/Member"
   },
   {
-    "label": "CoachMember",
+    "label": "Hoca-Üye Ataması",
     "path": "/CoachMember"
   },
   {
-    "label": "SessionPackage",
+    "label": "Seans Paketi",
     "path": "/SessionPackage"
   },
   {
-    "label": "Payment",
+    "label": "Ödeme",
     "path": "/Payment"
   },
   {
-    "label": "Lesson",
+    "label": "Ders",
     "path": "/Lesson"
   },
   {
-    "label": "Attendance",
+    "label": "Katılım",
     "path": "/Attendance"
   },
   {
